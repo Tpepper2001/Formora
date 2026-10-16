@@ -1,0 +1,6 @@
+{
+  "name": "Formora — AI Form Builder & Survey Analytics",
+  "description": "Create professional forms, surveys, and questionnaires in minutes with AI. Collect submissions, visual drag-and-drop editor, conditional logic, real-time analytics, and statistical reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

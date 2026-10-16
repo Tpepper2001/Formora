@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net: Default-deny all unspecified paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Security Helper Primitives
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Connection validation prober
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // 3. User Profiles Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Blanket user listing is strictly prohibited to prevent PII harvesting
+      allow create: if isOwner(userId) && isValidId(userId)
+                    && incoming().id == userId
+                    && incoming().email is string
+                    && incoming().email.size() <= 200;
+      allow update: if isOwner(userId) && isValidId(userId)
+                    && incoming().id == existing().id
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'tier', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(userId);
+    }
+
+    // 4. Forms Collection
+    match /forms/{formId} {
+      // Public respondents can fetch published forms; creators can view their own
+      allow get: if (resource.data.status == 'published')
+                 || (isSignedIn() && resource.data.ownerId == request.auth.uid);
+
+      // Secure query enforcer: users can only list their own forms
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn() && isValidId(formId)
+                    && incoming().ownerId == request.auth.uid
+                    && incoming().title is string
+                    && incoming().title.size() <= 200
+                    && (incoming().status in ['draft', 'published', 'closed']);
+
+      allow update: if isSignedIn() && isValidId(formId)
+                    && existing().ownerId == request.auth.uid
+                    && incoming().ownerId == existing().ownerId
+                    && incoming().title is string
+                    && incoming().title.size() <= 200
+                    && (incoming().status in ['draft', 'published', 'closed']);
+
+      allow delete: if isSignedIn() && isValidId(formId)
+                    && existing().ownerId == request.auth.uid;
+
+      // Immutable version snapshots
+      match /versions/{versionId} {
+        allow read: if isSignedIn() && get(/databases/$(database)/documents/forms/$(formId)).data.ownerId == request.auth.uid;
+        allow create: if isSignedIn() && isValidId(versionId)
+                      && get(/databases/$(database)/documents/forms/$(formId)).data.ownerId == request.auth.uid;
+        allow update, delete: if false; // Version snapshots are strictly immutable
+      }
+
+      // Form Responses Subcollection
+      match /responses/{responseId} {
+        // Only form owners can read or list submissions
+        allow get, list: if isSignedIn() && get(/databases/$(database)/documents/forms/$(formId)).data.ownerId == request.auth.uid;
+
+        // Creation of submissions is allowed if form exists
+        allow create: if isValidId(responseId)
+                      && incoming().formId == formId
+                      && incoming().status in ['valid', 'flagged', 'excluded'];
+
+        // Status tagging and notes can be edited only by form owner
+        allow update: if isSignedIn()
+                      && get(/databases/$(database)/documents/forms/$(formId)).data.ownerId == request.auth.uid
+                      && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'internalNotes']);
+
+        allow delete: if isSignedIn()
+                      && get(/databases/$(database)/documents/forms/$(formId)).data.ownerId == request.auth.uid;
+      }
+    }
+
+    // 5. Templates Collection
+    match /templates/{templateId} {
+      allow get, list: if true;
+      allow write: if false; // System-managed
+    }
+
+    // 6. Reports Collection
+    match /reports/{reportId} {
+      allow get, list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(reportId)
+                    && incoming().ownerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && existing().ownerId == request.auth.uid;
+    }
+
+    // 7. Usage Records Collection
+    match /usageRecords/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow write: if false;
+    }
+  }
+}

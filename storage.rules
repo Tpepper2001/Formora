@@ -1,0 +1,41 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Default-deny all unlisted storage paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidDocType() {
+      return request.resource.contentType.matches('application/pdf')
+          || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+          || request.resource.contentType.matches('text/plain')
+          || request.resource.contentType.matches('image/.*');
+    }
+
+    function isValidFileSize() {
+      return request.resource.size < 15 * 1024 * 1024; // 15MB limit
+    }
+
+    // User-uploaded documents for AI parsing
+    match /users/{userId}/documents/{documentId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidDocType() && isValidFileSize();
+    }
+
+    // Generated reports
+    match /users/{userId}/reports/{reportId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidFileSize();
+    }
+  }
+}

@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --bg-canvas: #F7F7F4;
+    --bg-surface: #FFFFFF;
+    --bg-surface-subtle: #F0F2ED;
+    --text-primary: #171918;
+    --text-secondary: #737873;
+    --border-color: #E2E4DF;
+    --color-accent: #176B52;
+    --color-accent-hover: #125541;
+    --color-accent-subtle: #E8F3EE;
+    --color-accent-text: #FFFFFF;
+  }
+
+  .dark {
+    --bg-canvas: #111412;
+    --bg-surface: #191D1A;
+    --bg-surface-subtle: #222723;
+    --text-primary: #F0F2EE;
+    --text-secondary: #9BA19B;
+    --border-color: #272C28;
+    --color-accent: #228B6B;
+    --color-accent-hover: #1A7558;
+    --color-accent-subtle: #172D24;
+    --color-accent-text: #FFFFFF;
+  }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--text-primary);
+    background-color: var(--bg-canvas);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(115, 120, 115, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(115, 120, 115, 0.4);
+}
+
+/* Print Styles for Exportable Reports & Blank Forms */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print, header, nav, aside, button:not(.print-include) {
+    display: none !important;
+  }
+  .print-page-break {
+    page-break-before: always;
+  }
+  .print-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

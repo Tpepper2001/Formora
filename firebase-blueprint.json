@@ -1,0 +1,137 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document storing personal information and settings.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Firebase Auth UID of the user." },
+        "email": { "type": "string", "format": "email", "description": "Email address of the user." },
+        "displayName": { "type": "string", "maxLength": 100, "description": "User full name or preferred display name." },
+        "photoURL": { "type": "string", "maxLength": 500, "description": "URL to the user avatar image." },
+        "tier": { "type": "string", "enum": ["free", "pro", "business", "enterprise"], "description": "Subscription tier." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp when the account was registered." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp when the account was last updated." }
+      },
+      "required": ["id", "email", "createdAt"]
+    },
+    "Form": {
+      "title": "Form",
+      "description": "Form definition created by an authenticated user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier of the form." },
+        "ownerId": { "type": "string", "description": "UID of the user who owns this form." },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200, "description": "Form title." },
+        "description": { "type": "string", "maxLength": 2000, "description": "Introductory description of the form." },
+        "category": { "type": "string", "maxLength": 100, "description": "Category tag." },
+        "status": { "type": "string", "enum": ["draft", "published", "closed"], "description": "Publication status." },
+        "submissionCount": { "type": "number", "description": "Total submissions received." },
+        "version": { "type": "number", "description": "Current version number." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "status", "createdAt"]
+    },
+    "FormVersion": {
+      "title": "FormVersion",
+      "description": "Snapshot of a published form definition.",
+      "type": "object",
+      "properties": {
+        "versionNumber": { "type": "number" },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "questions": { "type": "array" }
+      },
+      "required": ["versionNumber", "publishedAt", "title"]
+    },
+    "FormResponse": {
+      "title": "FormResponse",
+      "description": "A response submission to a specific form.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique response ID." },
+        "formId": { "type": "string", "description": "ID of the form this response belongs to." },
+        "submittedAt": { "type": "string", "format": "date-time" },
+        "completionTimeSeconds": { "type": "number" },
+        "isComplete": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["valid", "flagged", "excluded"] },
+        "internalNotes": { "type": "string", "maxLength": 1000 },
+        "respondentIdentifier": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "formId", "submittedAt", "status"]
+    },
+    "Template": {
+      "title": "Template",
+      "description": "Pre-built form template.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "category": { "type": "string" },
+        "estimatedMinutes": { "type": "number" }
+      },
+      "required": ["id", "title", "category"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Exported report document metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "formId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "format": { "type": "string", "enum": ["pdf", "docx", "csv", "xlsx"] },
+        "storagePath": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "formId", "ownerId", "format", "createdAt"]
+    },
+    "UsageRecord": {
+      "title": "UsageRecord",
+      "description": "Monthly usage metrics and quota consumption for an account.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "monthlyResponsesUsed": { "type": "number" },
+        "monthlyResponsesLimit": { "type": "number" },
+        "aiGenerationsUsed": { "type": "number" },
+        "aiGenerationsLimit": { "type": "number" },
+        "lastResetDate": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "monthlyResponsesUsed", "aiGenerationsUsed"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores individual user profile and settings, accessible only by the owner."
+    },
+    "/forms/{formId}": {
+      "schema": "Form",
+      "description": "Forms created by users. Private to owner when draft, readable by public when published."
+    },
+    "/forms/{formId}/versions/{versionId}": {
+      "schema": "FormVersion",
+      "description": "Immutable version snapshots of published forms."
+    },
+    "/forms/{formId}/responses/{responseId}": {
+      "schema": "FormResponse",
+      "description": "Submissions for a form. Read and managed only by form owner, created by public."
+    },
+    "/templates/{templateId}": {
+      "schema": "Template",
+      "description": "Reusable public form templates accessible to all users."
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Report records accessible only by the owning form creator."
+    },
+    "/usageRecords/{userId}": {
+      "schema": "UsageRecord",
+      "description": "Private usage and quota records for a user."
+    }
+  }
+}
