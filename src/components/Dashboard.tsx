@@ -21,9 +21,11 @@ import {
 } from 'lucide-react';
 import { FormModel, TemplateModel } from '../types/form';
 import { FORM_TEMPLATES } from '../data/templates';
+import { ActivityLog } from './ActivityLog';
 
 interface DashboardProps {
   forms: FormModel[];
+  userId?: string;
   onOpenFormEditor: (formId: string) => void;
   onOpenAnalytics: (formId: string) => void;
   onOpenShareModal: (form: FormModel) => void;
@@ -39,6 +41,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({
   forms,
+  userId,
   onOpenFormEditor,
   onOpenAnalytics,
   onOpenShareModal,
@@ -98,14 +101,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           className="p-4 bg-white dark:bg-[#191D1A] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] hover:border-[#176B52] dark:hover:border-[#228B6B] transition-all text-left group shadow-sm flex flex-col justify-between"
         >
           <div className="w-8 h-8 rounded-lg bg-[#E8F3EE] dark:bg-[#172D24] text-[#176B52] dark:text-[#228B6B] flex items-center justify-center mb-3">
-            <Sparkles className="w-4 h-4" />
+            <Plus className="w-4 h-4" />
           </div>
           <div>
             <span className="text-xs font-bold text-[#171918] dark:text-[#F0F2EE] group-hover:text-[#176B52] dark:group-hover:text-[#228B6B] transition-colors block">
-              Create with AI
+              Quick Form Wizard
             </span>
             <span className="text-[11px] text-[#737873] dark:text-[#9BA19B]">
-              From description or topic
+              From preset topics & models
             </span>
           </div>
         </button>
@@ -119,10 +122,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div>
             <span className="text-xs font-bold text-[#171918] dark:text-[#F0F2EE] group-hover:text-[#176B52] dark:group-hover:text-[#228B6B] transition-colors block">
-              Upload Document
+              Parse Document
             </span>
             <span className="text-[11px] text-[#737873] dark:text-[#9BA19B]">
-              Convert Word DOCX or PDF
+              Parse DOCX or pasted survey
             </span>
           </div>
         </button>
@@ -197,6 +200,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Real-time Activity Log Component */}
+      <ActivityLog
+        userId={userId}
+        onOpenForm={onOpenFormEditor}
+        onOpenResponses={onOpenAnalytics}
+      />
 
       {/* 3. Forms Workspace & Filter Tabs */}
       <div className="space-y-4">
@@ -376,11 +386,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {forms.length === 0 && (
               <div className="flex items-center justify-center gap-3 pt-2">
                 <button
-                  onClick={onOpenCreateWithAI}
+                  onClick={onOpenStartFromScratch}
                   className="px-4 py-2 text-xs font-semibold text-white bg-[#176B52] hover:bg-[#125541] rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Create with AI</span>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create Blank Form</span>
                 </button>
                 <button
                   onClick={onOpenTemplateGallery}

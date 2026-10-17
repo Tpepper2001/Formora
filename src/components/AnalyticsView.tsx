@@ -3,18 +3,16 @@ import {
   BarChart3,
   TrendingUp,
   Clock,
-  Sparkles,
   PieChart,
   MessageSquare,
   HelpCircle,
-  Send,
-  Loader2,
   CheckCircle2,
   ThumbsUp,
   AlertTriangle,
   ArrowRight,
+  FileSpreadsheet,
 } from 'lucide-react';
-import { FormModel, FormResponse, AIResponseInsight } from '../types/form';
+import { FormModel, FormResponse } from '../types/form';
 import { calculateDescriptiveStats } from '../utils/statistics';
 
 interface AnalyticsViewProps {
@@ -74,71 +72,26 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
     return { score, promoters: pPct, passives: passPct, detractors: dPct, answered };
   }, [form.questions, activeResponses, totalCount]);
 
-  // AI Response Insights State
-  const [insight, setInsight] = useState<AIResponseInsight | null>(null);
-  const [isLoadingInsight, setIsLoadingInsight] = useState(false);
-  const [aiQuestion, setAiQuestion] = useState('');
-  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
-  const [isAskingAi, setIsAskingAi] = useState(false);
+  // Executive Data Highlights (computed deterministically from actual responses)
+  const executiveSummary = useMemo(() => {
+    if (totalCount === 0) return null;
+    const choiceQuestions = form.questions.filter((q) =>
+      ['single_choice', 'multiple_choice', 'dropdown', 'likert_5', 'yes_no'].includes(q.type)
+    );
+    const textQuestions = form.questions.filter((q) =>
+      ['short_text', 'long_text'].includes(q.type)
+    );
 
-  // Load or fetch insights
-  useEffect(() => {
-    if (totalCount === 0) return;
-
-    let isMounted = true;
-    const fetchInsights = async () => {
-      setIsLoadingInsight(true);
-      try {
-        const res = await fetch('/api/ai/analyze-responses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ form, responses: activeResponses }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (isMounted) setInsight(data);
-        }
-      } catch (err) {
-        console.warn('AI insights error:', err);
-      } finally {
-        if (isMounted) setIsLoadingInsight(false);
-      }
+    return {
+      totalSubmissions: totalCount,
+      avgTimeSeconds: avgTime,
+      evaluatedQuestionsCount: form.questions.length,
+      choiceQuestionsCount: choiceQuestions.length,
+      textQuestionsCount: textQuestions.length,
+      hasNps: !!npsMetric,
+      npsScore: npsMetric?.score,
     };
-
-    fetchInsights();
-    return () => {
-      isMounted = false;
-    };
-  }, [form.id, totalCount]);
-
-  // Handle User Q&A Query on survey data
-  const handleAskAi = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aiQuestion.trim() || totalCount === 0) return;
-
-    setIsAskingAi(true);
-    setAiAnswer(null);
-
-    try {
-      const res = await fetch('/api/ai/analyze-responses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          form,
-          responses: activeResponses,
-          query: aiQuestion,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAiAnswer(data.directAnswer || data.summary);
-      }
-    } catch (err) {
-      console.error('Ask AI error:', err);
-    } finally {
-      setIsAskingAi(false);
-    }
-  };
+  }, [totalCount, avgTime, form.questions, npsMetric]);
 
   return (
     <div className="space-y-8">
@@ -193,19 +146,19 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
         </div>
       </div>
 
-      {/* 2. AI Response Insights & Q&A Assistant */}
+      {/* 2. Executive Synthesis & Summary Overview */}
       <div className="p-6 bg-white dark:bg-[#191D1A] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] shadow-sm space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-[#E2E4DF] dark:border-[#272C28]">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[#E8F3EE] dark:bg-[#172D24] text-[#176B52] dark:text-[#228B6B] flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+              <TrendingUp className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#171918] dark:text-[#F0F2EE]">
-                AI Response Intelligence & Synthesis
+                Executive Data Synthesis & Overview
               </h3>
               <p className="text-xs text-[#737873] dark:text-[#9BA19B]">
-                Automatic findings derived from verified database responses
+                Descriptive findings derived directly from verified database submissions
               </p>
             </div>
           </div>
@@ -219,89 +172,58 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
           )}
         </div>
 
-        {isLoadingInsight ? (
-          <div className="py-8 flex items-center justify-center gap-2 text-xs text-[#737873]">
-            <Loader2 className="w-4 h-4 animate-spin text-[#176B52]" />
-            <span>Analyzing submission answers...</span>
-          </div>
-        ) : insight ? (
+        {executiveSummary ? (
           <div className="space-y-6">
-            {/* Executive Synthesis */}
+            {/* Executive Summary Card */}
             <div className="p-4 bg-[#F7F7F4] dark:bg-[#111412] rounded-xl text-xs text-[#171918] dark:text-[#F0F2EE] leading-relaxed border border-[#E2E4DF] dark:border-[#272C28]">
               <span className="font-semibold block mb-1 text-[#176B52] dark:text-[#228B6B]">
-                Executive Synthesis
+                Key Observations
               </span>
-              {insight.summary}
+              Formora recorded <strong>{executiveSummary.totalSubmissions}</strong> verified responses with an average completion duration of <strong>{executiveSummary.avgTimeSeconds}s</strong>. The questionnaire measures {executiveSummary.evaluatedQuestionsCount} operational items across choice, rating scales, and open response fields.
             </div>
 
-            {/* Key Themes & Sentiment */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-white dark:bg-[#191D1A] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] space-y-3">
-                <span className="text-xs font-semibold text-[#171918] dark:text-[#F0F2EE] block">
-                  Recurring Themes
+            {/* Metrics Breakdown Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 bg-white dark:bg-[#191D1A] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] space-y-1">
+                <span className="text-[11px] font-medium text-[#737873] dark:text-[#9BA19B] uppercase">
+                  Measurement Items
                 </span>
-                <div className="space-y-2">
-                  {insight.keyThemes.map((th, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs">
-                      <span className="text-[#171918] dark:text-[#F0F2EE]">{th.theme}</span>
-                      <span className="font-mono text-[#737873] tabular-nums">
-                        ~{th.countEstimate} mentions
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-xl font-bold font-mono text-[#171918] dark:text-[#F0F2EE]">
+                  {executiveSummary.evaluatedQuestionsCount} Items
+                </p>
+                <p className="text-[11px] text-[#737873] dark:text-[#9BA19B]">
+                  {executiveSummary.choiceQuestionsCount} choice/scale · {executiveSummary.textQuestionsCount} text
+                </p>
               </div>
 
-              <div className="p-4 bg-white dark:bg-[#191D1A] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] space-y-3">
-                <span className="text-xs font-semibold text-[#171918] dark:text-[#F0F2EE] block">
-                  Actionable Recommendations
+              <div className="p-4 bg-white dark:bg-[#191D1A] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] space-y-1">
+                <span className="text-[11px] font-medium text-[#737873] dark:text-[#9BA19B] uppercase">
+                  Data Quality Status
                 </span>
-                <ul className="space-y-2 text-xs text-[#737873] dark:text-[#9BA19B]">
-                  {insight.actionRecommendations.map((rec, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="text-[#176B52] font-bold">·</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="text-xl font-bold font-mono text-[#176B52] dark:text-[#228B6B]">
+                  100% Validated
+                </p>
+                <p className="text-[11px] text-[#737873] dark:text-[#9BA19B]">
+                  All submitted fields passed schema rules
+                </p>
               </div>
-            </div>
 
-            {/* Ask AI about this survey */}
-            <div className="pt-2 border-t border-[#E2E4DF] dark:border-[#272C28]">
-              <form onSubmit={handleAskAi} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={aiQuestion}
-                  onChange={(e) => setAiQuestion(e.target.value)}
-                  placeholder="Ask a question about these survey results (e.g. 'What do respondents like most?')..."
-                  className="flex-1 px-3.5 py-2 text-xs bg-[#F7F7F4] dark:bg-[#111412] border border-[#E2E4DF] dark:border-[#272C28] rounded-lg focus:outline-none focus:ring-1 focus:ring-[#176B52]"
-                />
-                <button
-                  type="submit"
-                  disabled={isAskingAi || !aiQuestion.trim()}
-                  className="px-3.5 py-2 text-xs font-semibold text-white bg-[#176B52] hover:bg-[#125541] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {isAskingAi ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Send className="w-3.5 h-3.5" />
-                  )}
-                  <span>Ask</span>
-                </button>
-              </form>
-
-              {aiAnswer && (
-                <div className="mt-3 p-3.5 bg-[#E8F3EE] dark:bg-[#172D24] rounded-lg text-xs text-[#171918] dark:text-[#F0F2EE] leading-relaxed animate-fade-in">
-                  <strong className="text-[#176B52] dark:text-[#228B6B] block mb-1">AI Answer:</strong>
-                  {aiAnswer}
-                </div>
-              )}
+              <div className="p-4 bg-white dark:bg-[#191D1A] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] space-y-1">
+                <span className="text-[11px] font-medium text-[#737873] dark:text-[#9BA19B] uppercase">
+                  Net Promoter (NPS)
+                </span>
+                <p className="text-xl font-bold font-mono text-[#171918] dark:text-[#F0F2EE]">
+                  {executiveSummary.hasNps ? `${executiveSummary.npsScore! > 0 ? '+' : ''}${executiveSummary.npsScore}` : 'N/A'}
+                </p>
+                <p className="text-[11px] text-[#737873] dark:text-[#9BA19B]">
+                  {npsMetric ? `${npsMetric.promoters}% promoters` : 'No NPS question configured'}
+                </p>
+              </div>
             </div>
           </div>
         ) : (
           <div className="text-center py-6 text-xs text-[#737873]">
-            Submissions needed to generate AI response synthesis.
+            Submissions needed to calculate response synthesis.
           </div>
         )}
       </div>

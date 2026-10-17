@@ -114,7 +114,20 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && existing().ownerId == request.auth.uid;
     }
 
-    // 7. Usage Records Collection
+    // 7. Audit Logs Collection
+    match /auditLogs/{logId} {
+      // User can read and list their own audit logs
+      allow get, list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Authenticated users can log their actions (Form Created, Form Published, etc.)
+      // Public submissions can log 'Response Received' for the form owner
+      allow create: if (isSignedIn() && incoming().userId == request.auth.uid)
+                    || (incoming().action == 'Response Received' && incoming().userId is string);
+
+      allow update, delete: if false; // Audit logs are immutable records
+    }
+
+    // 8. Usage Records Collection
     match /usageRecords/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;

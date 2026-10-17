@@ -11,7 +11,7 @@ import {
   Sliders,
   Sparkles,
 } from 'lucide-react';
-import { FormModel, FormResponse, AIResponseInsight } from '../types/form';
+import { FormModel, FormResponse } from '../types/form';
 import {
   exportResponsesToCSV,
   exportResponsesToJSON,
@@ -24,7 +24,6 @@ interface ReportExportModalProps {
   onClose: () => void;
   form: FormModel;
   responses: FormResponse[];
-  aiInsight?: AIResponseInsight | null;
 }
 
 export const ReportExportModal: React.FC<ReportExportModalProps> = ({
@@ -32,12 +31,11 @@ export const ReportExportModal: React.FC<ReportExportModalProps> = ({
   onClose,
   form,
   responses,
-  aiInsight,
 }) => {
   // Configurable sections for the report builder
   const [includeOverview, setIncludeOverview] = useState(true);
   const [includeQuestionCharts, setIncludeQuestionCharts] = useState(true);
-  const [includeAiInsights, setIncludeAiInsights] = useState(true);
+  const [includeSummaryMetrics, setIncludeSummaryMetrics] = useState(true);
   const [includeStatisticalTests, setIncludeStatisticalTests] = useState(true);
   const [includeRawDataSample, setIncludeRawDataSample] = useState(false);
 
@@ -109,11 +107,11 @@ export const ReportExportModal: React.FC<ReportExportModalProps> = ({
               <label className="flex items-center gap-2.5 p-3 rounded-lg border border-[#E2E4DF] dark:border-[#272C28] cursor-pointer hover:bg-[#F7F7F4] dark:hover:bg-[#111412] transition-colors">
                 <input
                   type="checkbox"
-                  checked={includeAiInsights}
-                  onChange={(e) => setIncludeAiInsights(e.target.checked)}
+                  checked={includeSummaryMetrics}
+                  onChange={(e) => setIncludeSummaryMetrics(e.target.checked)}
                   className="rounded text-[#176B52]"
                 />
-                <span className="font-medium text-[#171918] dark:text-[#F0F2EE]">AI Insights & Sentiment Synthesis</span>
+                <span className="font-medium text-[#171918] dark:text-[#F0F2EE]">Statistical Synthesis & Key Metrics</span>
               </label>
 
               <label className="flex items-center gap-2.5 p-3 rounded-lg border border-[#E2E4DF] dark:border-[#272C28] cursor-pointer hover:bg-[#F7F7F4] dark:hover:bg-[#111412] transition-colors">
@@ -137,7 +135,7 @@ export const ReportExportModal: React.FC<ReportExportModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Word Executive Report */}
               <button
-                onClick={() => exportReportWord(form, validResponses, aiInsight?.summary)}
+                onClick={() => exportReportWord(form, validResponses)}
                 className="p-3.5 bg-[#F7F7F4] dark:bg-[#111412] hover:bg-[#F0F2ED] dark:hover:bg-[#222723] rounded-xl border border-[#E2E4DF] dark:border-[#272C28] text-left transition-colors flex items-start gap-3"
               >
                 <FileText className="w-5 h-5 text-[#176B52] shrink-0 mt-0.5" />
@@ -251,10 +249,10 @@ export const ReportExportModal: React.FC<ReportExportModalProps> = ({
                   </div>
                 )}
 
-                {includeAiInsights && aiInsight && (
+                {includeSummaryMetrics && (
                   <div className="p-3 bg-emerald-50 border-l-2 border-[#176B52] rounded text-[11px] leading-relaxed">
-                    <strong className="block text-[#176B52] mb-0.5">Executive Findings:</strong>
-                    {aiInsight.summary}
+                    <strong className="block text-[#176B52] mb-0.5">Statistical Synthesis:</strong>
+                    This report compiles {validResponses.length} verified submissions across {form.questions.length} questions.
                   </div>
                 )}
 

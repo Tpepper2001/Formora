@@ -30,6 +30,7 @@ import {
   updateResponseStatusInFirestore,
   updateResponseNotesInFirestore,
   deleteResponseFromFirestore,
+  logUserActivity,
 } from './services/firestoreService';
 import {
   Smartphone,
@@ -227,6 +228,22 @@ export default function App() {
                 console.warn('Firestore response write notice:', fsErr);
               }
 
+              // Log 'Response Received' to Firestore audit logs
+              if (fillTargetForm.ownerId) {
+                try {
+                  await logUserActivity({
+                    userId: fillTargetForm.ownerId,
+                    action: 'Response Received',
+                    formId: fillTargetForm.id,
+                    formTitle: fillTargetForm.title,
+                    details: 'New response received from respondent',
+                    timestamp: new Date().toISOString(),
+                  });
+                } catch (logErr) {
+                  console.warn('Audit log write notice:', logErr);
+                }
+              }
+
               // Also record via server endpoint for backup and notifications
               const res = await fetch(`/api/forms/${fillTargetForm.id}/responses`, {
                 method: 'POST',
@@ -245,9 +262,22 @@ export default function App() {
   // Form CRUD Handlers
   const handleSaveForm = async (updated: FormModel) => {
     try {
+      const prev = forms.find((f) => f.id === updated.id);
+      const isNewlyPublished = prev?.status !== 'published' && updated.status === 'published';
+
       // Sync to Firestore if authenticated
       if (user) {
         await saveFormToFirestore(updated, user.uid);
+        if (isNewlyPublished) {
+          await logUserActivity({
+            userId: user.uid,
+            action: 'Form Published',
+            formId: updated.id,
+            formTitle: updated.title,
+            details: 'Form published to respondents',
+            timestamp: new Date().toISOString(),
+          });
+        }
       }
       const res = await fetch(`/api/forms/${updated.id}`, {
         method: 'PUT',
@@ -256,13 +286,13 @@ export default function App() {
       });
       if (res.ok) {
         const data = await res.json();
-        setForms((prev) => prev.map((f) => (f.id === updated.id ? (data.form || updated) : f)));
+        setForms((prevForms) => prevForms.map((f) => (f.id === updated.id ? (data.form || updated) : f)));
       } else {
-        setForms((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+        setForms((prevForms) => prevForms.map((f) => (f.id === updated.id ? updated : f)));
       }
     } catch (err) {
       console.error('Save failed:', err);
-      setForms((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+      setForms((prevForms) => prevForms.map((f) => (f.id === updated.id ? updated : f)));
     }
   };
 
@@ -309,6 +339,14 @@ export default function App() {
         const createdForm: FormModel = data.form;
         if (user) {
           await saveFormToFirestore(createdForm, user.uid);
+          await logUserActivity({
+            userId: user.uid,
+            action: 'Form Created',
+            formId: createdForm.id,
+            formTitle: createdForm.title,
+            details: `${createdForm.questions.length} questions initialized`,
+            timestamp: new Date().toISOString(),
+          });
         }
         setForms((prev) => [createdForm, ...prev]);
         setActiveFormId(createdForm.id);
@@ -332,8 +370,19 @@ export default function App() {
 
   const handleDeleteForm = async (formId: string) => {
     try {
+      const formToDelete = forms.find((f) => f.id === formId);
       if (user) {
         await deleteFormFromFirestore(formId);
+        if (formToDelete) {
+          await logUserActivity({
+            userId: user.uid,
+            action: 'Form Deleted',
+            formId: formToDelete.id,
+            formTitle: formToDelete.title,
+            details: 'Form deleted from workspace',
+            timestamp: new Date().toISOString(),
+          });
+        }
       }
       const res = await fetch(`/api/forms/${formId}`, { method: 'DELETE' });
       if (res.ok || user) {
@@ -474,6 +523,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
             <Dashboard
               forms={forms}
+              userId={user?.uid}
               onOpenFormEditor={(id) => {
                 setActiveFormId(id);
                 setCurrentView('editor');

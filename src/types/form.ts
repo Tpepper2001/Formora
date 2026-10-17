@@ -165,23 +165,22 @@ export interface TemplateModel {
   form: Partial<FormModel>;
 }
 
-export interface AIImprovementSuggestion {
-  type: 'bias' | 'ambiguity' | 'redundancy' | 'ordering' | 'validation' | 'scale';
+export interface AuditLogItem {
+  id: string;
+  userId: string;
+  action: 'Form Created' | 'Response Received' | 'Form Published' | 'Form Updated' | 'Form Deleted';
+  formId?: string;
+  formTitle: string;
+  details?: string;
+  timestamp: string;
+}
+
+export interface FormHealthIssue {
+  type: 'info' | 'warning' | 'error';
   questionId?: string;
   questionTitle?: string;
   issue: string;
   suggestion: string;
-  revisedQuestion?: Partial<FormQuestion>;
-}
-
-export interface AIResponseInsight {
-  summary: string;
-  sentiment: 'positive' | 'neutral' | 'negative' | 'mixed';
-  keyThemes: { theme: string; countEstimate: number; sentiment: string }[];
-  topLikes: string[];
-  painPoints: string[];
-  actionRecommendations: string[];
-  dataFreshness: string;
 }
 
 export interface ResearchObjective {

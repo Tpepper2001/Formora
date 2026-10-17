@@ -83,27 +83,43 @@ export const ResearchAlignmentModal: React.FC<ResearchAlignmentModalProps> = ({
     );
   };
 
-  const handleRunAlignmentCheck = async () => {
+  const handleRunAlignmentCheck = () => {
     setIsAnalyzing(true);
-    try {
-      const res = await fetch('/api/ai/check-alignment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          objectives,
-          hypotheses,
-          questions: form.questions.map((q) => ({ id: q.id, title: q.title, type: q.type })),
-        }),
+    setTimeout(() => {
+      const totalObjs = objectives.length;
+      const mappedObjs = objectives.filter((o) => o.mappedQuestionIds.length > 0).length;
+      const coveragePct = totalObjs > 0 ? Math.round((mappedObjs / totalObjs) * 100) : 100;
+
+      const unmappedObjectives = objectives
+        .filter((o) => o.mappedQuestionIds.length === 0)
+        .map((o) => ({
+          construct: o.title,
+          issue: 'No questionnaire items currently mapped to this research objective.',
+        }));
+
+      const allMappedQIds = new Set(objectives.flatMap((o) => o.mappedQuestionIds));
+      const unmappedQuestions = form.questions
+        .filter((q) => !allMappedQIds.has(q.id))
+        .map((q) => ({
+          questionId: q.id,
+          title: q.title,
+          reason: 'Item is not linked to any specified objective.',
+        }));
+
+      setAlignmentResult({
+        overallScore: coveragePct,
+        status: coveragePct >= 90 ? 'Strongly Aligned' : coveragePct >= 60 ? 'Moderately Aligned' : 'Needs Revision',
+        alignmentGaps: unmappedObjectives,
+        redundantQuestions: unmappedQuestions.slice(0, 3),
+        recommendations: [
+          `Coverage rate: ${coveragePct}% of defined objectives have mapped questions.`,
+          unmappedObjectives.length > 0
+            ? 'Map at least one measurement question to each unfilled objective.'
+            : 'All objectives have associated measurement variables.',
+        ],
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAlignmentResult(data);
-      }
-    } catch (err) {
-      console.error('Alignment check error:', err);
-    } finally {
       setIsAnalyzing(false);
-    }
+    }, 150);
   };
 
   return (

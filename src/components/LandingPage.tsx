@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   HelpCircle,
   Play,
+  Plus,
 } from 'lucide-react';
 import { FORM_TEMPLATES } from '../data/templates';
 
@@ -33,12 +34,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const faqs = [
     {
-      q: 'How does AI form generation work?',
-      a: 'Formora converts your natural language description, prompt, or topic into a structured questionnaire. It selects appropriate question types, generates relevant response options, sets validation rules, and organizes items into logical sections.',
+      q: 'How does questionnaire creation work?',
+      a: 'Formora provides an intuitive visual builder, pre-configured question sets for customer feedback, HR surveys, event registration, and instant parsing of question lists into structured forms with customizable validation and logic.',
     },
     {
-      q: 'Can I upload Word documents or PDFs to generate forms?',
-      a: 'Yes. Formora accepts DOCX, PDF, and plain text TXT files. The extraction engine scans your document content, extracts key questions and criteria, and converts them into editable form fields with options you can customize.',
+      q: 'Can I upload Word documents or text to generate forms?',
+      a: 'Yes. Formora accepts DOCX, PDF, and plain text files. The parser scans your content, extracts questions and rating criteria, and converts them into editable form fields with options you can customize.',
     },
     {
       q: 'Are respondents required to have an account to submit answers?',
@@ -46,7 +47,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     },
     {
       q: 'How are response analytics and charts generated?',
-      a: 'Charts and summary statistics are computed automatically from actual submission data stored in your database. Choice questions yield frequency distributions, numeric questions calculate means and medians, and open-ended text answers are synthesized into themes.',
+      a: 'Charts and summary statistics are computed automatically from actual submission data stored in your database. Choice questions yield frequency distributions, numeric questions calculate means and medians, and open-ended text answers are grouped for analysis.',
     },
     {
       q: 'Is advanced statistical testing required to use the platform?',
@@ -54,7 +55,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     },
     {
       q: 'What export formats are supported for reports and data?',
-      a: 'You can download raw response datasets in CSV and JSON formats, export blank printable forms in Word DOC and PDF formats, and generate executive reports complete with charts and AI summaries.',
+      a: 'You can download raw response datasets in CSV and JSON formats, export blank printable forms in Word DOC and PDF formats, and generate executive reports complete with charts and statistical summaries.',
     },
   ];
 
@@ -68,14 +69,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Every form starts with an idea.
             </h1>
             <p className="text-lg sm:text-xl text-[#737873] dark:text-[#9BA19B] leading-relaxed mb-8 [text-wrap:balance]">
-              Describe what you need, upload a document, or start from scratch. Formora helps you create professional forms, collect responses, and turn submissions into useful insights.
+              Design questionnaires, collect live responses, and turn submissions into clear, actionable statistical insights with Formora.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
-                onClick={() => onStartCreate('ai')}
+                onClick={() => onStartCreate('scratch')}
                 className="w-full sm:w-auto px-6 py-3.5 text-sm font-semibold text-white bg-[#176B52] hover:bg-[#125541] rounded-lg shadow-sm transition-all whitespace-nowrap active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 <span>Create your first form</span>
               </button>
               <button
@@ -139,10 +140,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <Sparkles className="w-5 h-5" />
               </div>
               <h3 className="text-lg font-semibold text-[#171918] dark:text-[#F0F2EE] mb-2">
-                AI Form Generation
+                Quick Form Setup
               </h3>
               <p className="text-sm text-[#737873] dark:text-[#9BA19B] leading-relaxed">
-                Describe your purpose, target audience, and desired tone. Formora drafts clear questions, Likert scales, and options in seconds.
+                Choose your purpose, target audience, and desired format. Formora drafts clear questions, Likert scales, and options in seconds.
               </p>
             </div>
 
@@ -190,7 +191,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 Automatic Response Analytics
               </h3>
               <p className="text-sm text-[#737873] dark:text-[#9BA19B] leading-relaxed">
-                Real-time distributions, NPS score breakdowns, mean values for numeric ratings, and AI theme synthesis for text comments.
+                Real-time distributions, NPS score breakdowns, mean values for numeric ratings, and structured statistical metrics.
               </p>
             </div>
 
@@ -374,7 +375,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-[#176B52]" />
-                    <span>Basic AI form generation</span>
+                    <span>Quick form presets & templates</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-[#176B52]" />
@@ -423,7 +424,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </li>
                   <li className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-[#176B52]" />
-                    <span>AI response summaries & Q&A</span>
+                    <span>Executive response metrics & reports</span>
                   </li>
                 </ul>
               </div>
@@ -572,7 +573,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={() => onStartCreate('ai')}
               className="w-full sm:w-auto px-6 py-3 text-sm font-semibold text-white bg-[#176B52] hover:bg-[#125541] rounded-lg shadow-sm transition-all"
             >
-              Create with AI
+              Open Form Wizard
             </button>
             <button
               onClick={() => onStartCreate('scratch')}

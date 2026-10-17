@@ -11,7 +11,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { FormModel, FormResponse } from '../types/form';
+import { FormModel, FormResponse, AuditLogItem } from '../types/form';
 
 // -------------------------------------------------------------
 // Forms Service
@@ -189,4 +189,57 @@ export async function deleteResponseFromFirestore(
   } catch (err) {
     handleFirestoreError(err, OperationType.DELETE, path);
   }
+}
+
+// -------------------------------------------------------------
+// Audit Logs Service
+// -------------------------------------------------------------
+
+export async function logUserActivity(
+  activity: Omit<AuditLogItem, 'id'> & { id?: string }
+): Promise<string> {
+  const logId = activity.id || `log-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const path = `auditLogs/${logId}`;
+  try {
+    const logRef = doc(db, 'auditLogs', logId);
+    const payload: AuditLogItem = {
+      ...activity,
+      id: logId,
+      timestamp: activity.timestamp || new Date().toISOString(),
+    };
+    await setDoc(logRef, payload);
+    return logId;
+  } catch (err) {
+    handleFirestoreError(err, OperationType.CREATE, path);
+    return logId;
+  }
+}
+
+export function subscribeAuditLogs(
+  userId: string,
+  onUpdate: (logs: AuditLogItem[]) => void,
+  onError?: (err: Error) => void
+) {
+  const path = 'auditLogs';
+  const q = query(collection(db, path), where('userId', '==', userId));
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const logs: AuditLogItem[] = [];
+      snapshot.forEach((docSnap) => {
+        logs.push({
+          ...(docSnap.data() as AuditLogItem),
+          id: docSnap.id,
+        });
+      });
+      // Sort in memory by timestamp descending
+      logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      onUpdate(logs);
+    },
+    (err) => {
+      if (onError) onError(err);
+      handleFirestoreError(err, OperationType.LIST, path);
+    }
+  );
 }

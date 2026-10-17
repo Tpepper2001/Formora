@@ -24,6 +24,7 @@ import {
   HelpCircle,
   AlertCircle,
   FileDown,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   FormModel,
@@ -291,14 +292,14 @@ export const FormEditor: React.FC<FormEditorProps> = ({
             </button>
           </div>
 
-          {/* AI Audit / Improve */}
+          {/* Form Health Checklist */}
           <button
             onClick={() => onOpenAICreator('improve')}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#176B52] dark:text-[#228B6B] bg-[#E8F3EE] dark:bg-[#172D24] hover:bg-[#D5EADB] dark:hover:bg-[#1C3B2E] rounded-md transition-colors whitespace-nowrap"
-            title="Audit question clarity, scales, and bias"
+            title="Check question structures, options, and scales"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>AI Audit</span>
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Form Health</span>
           </button>
 
           {/* Blank Word Export */}

@@ -89,6 +89,21 @@
       },
       "required": ["id", "formId", "ownerId", "format", "createdAt"]
     },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Activity log entry tracking user actions such as Form Created, Form Published, and Response Received.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string", "description": "UID of the user associated with the activity." },
+        "action": { "type": "string", "enum": ["Form Created", "Response Received", "Form Published", "Form Updated", "Form Deleted"], "description": "Action performed." },
+        "formId": { "type": "string", "description": "Optional form ID related to this action." },
+        "formTitle": { "type": "string", "description": "Title of the form." },
+        "details": { "type": "string", "description": "Additional event details." },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "action", "timestamp"]
+    },
     "UsageRecord": {
       "title": "UsageRecord",
       "description": "Monthly usage metrics and quota consumption for an account.",
@@ -97,11 +112,9 @@
         "userId": { "type": "string" },
         "monthlyResponsesUsed": { "type": "number" },
         "monthlyResponsesLimit": { "type": "number" },
-        "aiGenerationsUsed": { "type": "number" },
-        "aiGenerationsLimit": { "type": "number" },
         "lastResetDate": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "monthlyResponsesUsed", "aiGenerationsUsed"]
+      "required": ["userId", "monthlyResponsesUsed"]
     }
   },
   "firestore": {
@@ -128,6 +141,10 @@
     "/reports/{reportId}": {
       "schema": "Report",
       "description": "Report records accessible only by the owning form creator."
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Audit log entries for user actions like Form Created, Response Received, and Form Published."
     },
     "/usageRecords/{userId}": {
       "schema": "UsageRecord",
